@@ -1,5 +1,7 @@
 # Assembly
 
+[![NPM Version][npm-image]][npm-url]
+
 ## 簡介
 
 javascript是一個基於非同步驅動，且有數種呼叫function的概念，這點讓js於functional programming設計下險些困難。
@@ -200,3 +202,6 @@ factory.line('math', 'compute')(5).add(10).double().promise().then((result) => {
     console.log(result) // 30
 })
 ```
+
+[npm-image]: https://img.shields.io/npm/v/assemblyjs.svg
+[npm-url]: https://npmjs.org/package/assemblyjs
