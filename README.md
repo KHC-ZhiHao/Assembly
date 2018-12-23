@@ -130,7 +130,7 @@ math.addTool({
     action: function(number, { include }, error, success) {
         include('isNumber').action([number], (err) => {
             if (err == null) {
-            	success(number * 2)
+                success(number * 2)
             } else {
                 error(err)
             }
@@ -164,27 +164,27 @@ group.addLine({
     },
     // layout為一個鍊中能呼叫的函數表
     layout: {
-	    add: function(number, { include }, error, next) {
-			include('sum').action(this.number, number, (err, result) => {
-            	if (err) {
-                	error(err)
+        add: function(number, { include }, error, next) {
+            include('sum').action(this.number, number, (err, result) => {
+                if (err) {
+                    error(err)
                 } else {
                     this.number = result
-                	next()
+                    next()
                 }
             })
-		},
+        },
     	double: function({ include }, error, next) {
-			include('double').action(this.number, (err, result) => {
-            	if (err) {
-                	error(err)
+            include('double').action(this.number, (err, result) => {
+                if (err) {
+                    error(err)
                 } else {
                     this.number = result
-                	next()
+                    next()
                 }
             })
-		}
-	}
+        }
+    }
 })
 ```
 
