@@ -105,10 +105,12 @@ class Deploy extends ModuleBase {
     }
 
     action(callback) {
-        let error = function(error){
-            callback(error, null)
+        let error = (error) => {
+            this.main.fail(error, (report) => {
+                callback(report, null)
+            })
         }
-        let success = function(success) {
+        let success = (success) => {
             callback(null, success)
         }
         this.process(error, success)
@@ -124,13 +126,6 @@ class Deploy extends ModuleBase {
                 }
             })
         })
-    }
-
-    createError(message, stack) {
-        return {
-            message: message || 'unknown error',
-            stack
-        }
     }
 
     process(error, success) {

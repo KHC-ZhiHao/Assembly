@@ -158,7 +158,7 @@ group.addLine({
     output: function({ include }, error, success) {
     	success(this.number)
     },
-    // 當執行鍊中觸發error就會觸發fail，屆時會回傳一個有stack, message的物件
+    // 當執行鍊中觸發error就會觸發fail，err:{ stack, message} 的物件
     fail: function(err, report) {
     	report(err)
     },
