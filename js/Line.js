@@ -106,7 +106,7 @@ class Deploy extends ModuleBase {
 
     action(callback) {
         let error = (error) => {
-            this.main.fail(error, (report) => {
+            this.main.data.fail(error, (report) => {
                 callback(report, null)
             })
         }
