@@ -8,8 +8,6 @@ javascript是一個基於非同步驅動，且有數種呼叫function的概念�
 
 而Assembly是一個函數包裝器，求助些許物件導向的概念，編寫出來的function可以泛用各種型態，並適應鍊式寫法。
 
->物件導向的概念還是很好用的，尤其是管理方面
-
 ## 安裝
 
 npm
@@ -54,6 +52,31 @@ factory.addGroup('math', group, {
 })
 ```
 
+#### Alone
+
+獨立Group，使其不再受Factory管制
+
+>獨立的Group無法被加入Factory，也無法反覆獨立
+
+```js
+let group = new Assembly.Group({
+    create(options) {
+        this.options = options // {coefficient: 5}
+    }
+})
+group.addTool({
+    name: 'sum',
+    allowDirect: true,
+    action: function(a, b, { include, group, store }, error, success) {
+        success(a + b)
+    }
+})
+let alone = group.alone({
+    coefficient: 5
+})
+alone.tool('sum').direct(5, 10) // 15
+```
+
 ### Tool
 
 Tool是一個裝載function的單位，由group建造
@@ -75,7 +98,7 @@ group.addTool({
 })
 ```
 
-### 呼叫function
+#### 呼叫function
 
 ```js
 let sumAndAdd5 = factory.tool('math', 'sumAndAdd5')
@@ -87,6 +110,19 @@ sumAndAdd5.action(5, 10, (err, result) => {
 sumAndAdd5.promise(5, 10).then((result) => {
     console.log(result) // 20
 })
+
+// look for normal function.
+let saa5 = sumAndAdd5.direct
+saa5(5, 10) // 20
+```
+
+#### 預填裝 (ver1.0.3)
+
+```js
+let sumAndAdd5 = factory.tool('math', 'sumAndAdd5').packing(5, 10)
+sumAndAdd5.direct() // 20
+let sumAndAdd5 = factory.tool('math', 'sumAndAdd5').packing(5)
+sumAndAdd5.direct(15) // 25
 ```
 
 ## 生產線

@@ -26,12 +26,7 @@ class Tool extends ModuleBase {
             group: this.groupCase,
             include: this.include.bind(this)
         })
-        this.export = {
-            store: this.getStore.bind(this),
-            direct: this.createLambda(this.direct, 'direct'),
-            action: this.createLambda(this.action, 'action'),
-            promise: this.createLambda(this.promise, 'promise')
-        }
+        this.exports = this.createExports()
     }
 
     initSystem() {
@@ -42,14 +37,27 @@ class Tool extends ModuleBase {
         }
     }
 
+    createExports(args) {
+        return {
+            store: this.getStore.bind(this),
+            direct: this.createLambda(this.direct, 'direct', args),
+            action: this.createLambda(this.action, 'action', args),
+            promise: this.createLambda(this.promise, 'promise', args)
+        }
+    }
+
     getError(message) {
         return message || 'unknown error'
     }
 
-    createLambda(func, type) {
+    packing() {
+        return this.createExports([...arguments])
+    }
+
+    createLambda(func, type, pack = []) {
         let self = this
         return function () {
-            let params = [...arguments]
+            let params = pack.concat([...arguments])
             let callback = null
             if (type === 'action') {
                 if (typeof params.slice(-1)[0] === 'function') {
@@ -118,7 +126,10 @@ class Tool extends ModuleBase {
 
     use() {
         if (this.install) { this.install() }
-        return this.export
+        return {
+            ...this.exports,
+            packing: this.packing.bind(this)
+        }
     }
 
 }

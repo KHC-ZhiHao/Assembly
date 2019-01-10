@@ -7,7 +7,8 @@ class Assembly extends ModuleBase {
 
     constructor() {
         super("Assembly")
-        this.groups = {};
+        this.groups = {}
+        this.namespace = null
     }
 
     /**
@@ -44,18 +45,22 @@ class Assembly extends ModuleBase {
      */
 
     addGroup(name, group, options) {
-        if( this.groups[name] == null ) {
-            if (group instanceof Group) {
-                if (group.create) {
-                    group.create(options)
-                }
-                this.groups[name] = group
-            } else {
-                this.$systemError('addGroup', 'Must group.', group)
-            }
-        } else {
+        if (this.groups[name] != null){
             this.$systemError('addGroup', 'Name already exists.', name)
+            return
         }
+        if ((group instanceof Group) === false) {
+            this.$systemError('addGroup', 'Must group.', group)
+            return
+        }
+        if (group.mode === 'alone') {
+            this.$systemError('addGroup', 'Group is alone.', group)
+            return
+        }
+        if (group.create) {
+            group.create(options)
+        }
+        this.groups[name] = group
     }
 
     /**

@@ -4,15 +4,29 @@ class Group extends ModuleBase {
         super("Group")
         this.case = new Case()
         this.line = {}
+        this.mode = 'factory'
         this.toolbox = {}
         this.data = this.$verify(options, {
             create: [false, function(){}]
         })
     }
 
-    create(options){
+    alone(options) {
+        if (this.mode === 'alone') {
+            this.$systemError('alone', 'Alone only use once, try function() { return new Group() }.')
+        } else {
+            this.mode = 'alone'
+            this.create(options)
+            return {
+                tool: this.callTool.bind(this),
+                line: this.callLine.bind(this)
+            }
+        }
+    }
+
+    create(options) {
         this.data.create.bind(this.case)(options)
-        this.create = null;
+        this.create = null
     }
 
     // get
@@ -29,8 +43,16 @@ class Group extends ModuleBase {
         if( this.line[name] ){
             return this.line[name]
         } else {
-            this.$systemError('getCurry', 'curry not found.', name)
+            this.$systemError('getLine', 'Line not found.', name)
         }
+    }
+
+    callTool(name) {
+        return this.getTool(name).use()
+    }
+
+    callLine(name) {
+        return this.getLine(name).use()
     }
 
     // compile
