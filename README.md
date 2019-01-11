@@ -125,6 +125,53 @@ let sumAndAdd5 = factory.tool('math', 'sumAndAdd5').packing(5)
 sumAndAdd5.direct(15) // 25
 ```
 
+#### 預監聽錯誤 (ver1.0.5)
+
+NG將協助你捕捉錯誤或優化程式碼
+
+```js
+group.addTool({
+    name: 'errorDemo',
+    allowDirect: true,
+    action: function(a, b, { include, group, store }, error, success) {
+        let t = Math.random() > 0.5 ? error : success
+        t()
+    }
+})
+```
+
+##### action
+
+action預先呼叫錯誤，最後的callback將忽略賦予error
+
+```js
+factory.tool('math', 'errorDemo').ng((err)=>{
+    console.log(err)
+}).action((res) => {
+    console.log(res)
+})
+```
+
+##### direct
+
+direct原本在錯誤處裡上會直接throw error，但預處理則呼叫callback
+
+```js
+factory.tool('math', 'errorDemo').ng((err)=>{
+    console.log(err)
+}).direct()
+```
+
+##### promise
+
+promise在遭遇錯誤仍然會宣告reject，但同時執行錯誤的回呼函式
+
+```js
+factory.tool('math', 'errorDemo').ng((err)=>{
+    console.log(err)
+}).promise()
+```
+
 ## 生產線
 
 建構生產線是一個函數柯理化(curry)的過程，在這之前，先將整個function給定義好

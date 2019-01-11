@@ -26,7 +26,6 @@ class Tool extends ModuleBase {
             group: this.groupCase,
             include: this.include.bind(this)
         })
-        this.exports = this.createExports()
     }
 
     initSystem() {
@@ -37,12 +36,30 @@ class Tool extends ModuleBase {
         }
     }
 
-    createExports(args) {
-        return {
+    createExports(supParams) {
+        let exps = {
             store: this.getStore.bind(this),
-            direct: this.createLambda(this.direct, 'direct', args),
-            action: this.createLambda(this.action, 'action', args),
-            promise: this.createLambda(this.promise, 'promise', args)
+            direct: this.createLambda(this.direct, 'direct', supParams),
+            action: this.createLambda(this.action, 'action', supParams),
+            promise: this.createLambda(this.promise, 'promise', supParams)
+        }
+        let supports = this.createSupport(exps, supParams)
+        return Object.assign(exps, supports)
+    }
+
+    createSupport(exps, supports) {
+        return {
+            ng: function(broadcast) {
+                if (typeof broadcast === 'function') {
+                    supports.ng = broadcast
+                    return exps
+                }
+                this.$systemError('createSupport', 'Ng param not a function.', broadcast)
+            },
+            packing: function() {
+                supports.args = [...arguments]
+                return exps
+            },
         }
     }
 
@@ -50,14 +67,10 @@ class Tool extends ModuleBase {
         return message || 'unknown error'
     }
 
-    packing() {
-        return this.createExports([...arguments])
-    }
-
-    createLambda(func, type, pack = []) {
+    createLambda(func, type, supports) {
         let self = this
         return function () {
-            let params = pack.concat([...arguments])
+            let params = supports.args.concat([...arguments])
             let callback = null
             if (type === 'action') {
                 if (typeof params.slice(-1)[0] === 'function') {
@@ -70,7 +83,7 @@ class Tool extends ModuleBase {
             for (let i = 0; i < args.length; i++) {
                 args[i] = params[i]
             }
-            return func.bind(self)(args, callback)
+            return func.bind(self)(args, callback, supports)
         }
     }
 
@@ -82,37 +95,72 @@ class Tool extends ModuleBase {
         this.data.action.call(this.user, ...params, this.system, error, success)
     }
 
-    direct(params){
+    direct(params, callback, supports){
         if (this.data.allowDirect === false) {
             this.$systemError('direct', 'Not allow direct.', this.data.name)
         }
+        let over = false
         let output = null
-        let error = (error) => {
-            throw new Error(this.getError(error))
+        let error = (err) => {
+            if (over) return
+            over = true
+            if (supports.ng) {
+                supports.ng(this.getError(err))
+            } else {
+                throw new Error(this.getError(err))
+            }
         }
         let success = (data) => {
+            if (over) return
+            over = true
             output = data
         }
         this.call(params, error, success)
         return output
     }
 
-    action(params, callback = function() {}) {
+    action(params, callback = function() {}, supports) {
+        let over = false
         let error = (error) => {
-            callback(this.getError(error), null)
+            if (over) return
+            over = true
+            let message = this.getError(error)
+            if (supports.ng) {
+                supports.ng(message)
+            } else {
+                callback(message, null)
+            }
         }
         let success = (success) => {
-            callback(null, success)
+            if (over) return
+            over = true
+            if (supports.ng) {
+                callback(success)
+            } else {
+                callback(null, success)
+            }
         }
         this.call(params, error, success)
     }
 
-    promise(params) {
+    promise(params, callback, supports) {
         return new Promise((resolve, reject)=>{
+            let over = false
             let error = (error) => {
-                reject(this.getError(error))
+                if (over) return
+                over = true
+                let message = this.getError(error)
+                if (supports.ng) {
+                    supports.ng(this.getError(error))
+                }
+                reject(message)
             }
-            this.call(params, error, resolve)
+            let success = (success) => {
+                if (over) return
+                over = true
+                resolve(success)
+            }
+            this.call(params, error, success)
         })
     }
 
@@ -126,10 +174,11 @@ class Tool extends ModuleBase {
 
     use() {
         if (this.install) { this.install() }
-        return {
-            ...this.exports,
-            packing: this.packing.bind(this)
+        let supports = {
+            ng: null,
+            args: []
         }
+        return this.createExports(supports)
     }
 
 }
