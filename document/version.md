@@ -20,3 +20,9 @@
 ### MODIFY
 
 * Packing : 連續宣告將反覆包裝下去
+
+## 1.0.7
+
+### NEW
+
+* Param Length: 直觀的錯誤處理

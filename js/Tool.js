@@ -43,9 +43,12 @@ class Tool extends ModuleBase {
     }
 
     initArgLength() {
-        this.argumentLength = this.data.paramLength !== 0 ? this.data.paramLength : this.data.action.length - 3
+        this.argumentLength = this.data.paramLength !== 0 ? this.data.paramLength : (this.data.action.length - 3)
         if (this.argumentLength < 0) {
             this.argumentLength = ModuleBase.getArgsLength(this.data.action) - 3
+        }
+        if (this.argumentLength < 0) {
+            this.$systemError('initArgLength', 'Args length < 0', this.name + `(length:${this.argumentLength})`)
         }
     }
 
