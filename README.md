@@ -81,17 +81,22 @@ alone.tool('sum').direct(5, 10) // 15
 
 Tool是一個裝載function的單位，由group建造
 
+>(v1.0.6) Assembly帶有一個參數解析器，但在js不斷突變的狀況下，我無法保證該解析器能夠處理所有狀況，盡可能使用paramLength來處理，且定義paramLength將跳過執行解析器的動作，可以提供良好的效能
+
 ```js
 group.addTool({
+    // (Require) function name
     name: 'sumAndAdd5',
     // 是否支援直接回傳，若有非同步處理請關閉(預設:true)
     allowDirect: true,
+    // 手動定義參數長度
+    paramLength: 2,
     // 在喚醒這個tool時建立
     create: function(store, { include, group }) {
         store.hello = 'world' // store是一個對外物件，你有需要的時候就會想到它的
         this.add = group.options.coefficient
     },
-    // 對於外部來看這是個function(a,b)，並沒有其他參數
+    // (Require) 對於外部來看這是個function(a,b)，並沒有其他參數
     action: function(a, b, { include, group, store }, error, success) {
         success(a + b + this.add)
     }
@@ -123,6 +128,14 @@ let sumAndAdd5 = factory.tool('math', 'sumAndAdd5').packing(5, 10)
 sumAndAdd5.direct() // 20
 let sumAndAdd5 = factory.tool('math', 'sumAndAdd5').packing(5)
 sumAndAdd5.direct(15) // 25
+let sumAndAdd5 = factory.tool('math', 'sumAndAdd5').packing(5).packing(5)
+sumAndAdd5.direct() // 15
+```
+
+#### 解除預填裝 (ver1.0.6)
+
+```js
+let sumAndAdd5 = factory.tool('math', 'sumAndAdd5').packing(5, 10).unPacking().direct(5, 5) // 15
 ```
 
 #### 預監聽錯誤 (ver1.0.5)
