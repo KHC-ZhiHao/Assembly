@@ -26,3 +26,16 @@
 ### NEW
 
 * Param Length: 直觀的錯誤處理
+
+## 1.0.8
+
+### NEW
+
+* Group Alias: 群組別名，可以顯示在追蹤上
+* Assembly Bridge: 在呼叫群組前宣告的函數
+* Merger And Coop: Alone群組的內部運用
+
+### MODIFY
+
+* Error: 某些錯誤有了專屬的錯誤訊息
+* Error : exception的追蹤能看到函數名稱

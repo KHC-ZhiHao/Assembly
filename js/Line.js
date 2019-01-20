@@ -6,9 +6,9 @@ class Line extends ModuleBase {
         this.data = this.$verify(options, {
             name: [true, ''],
             fail: [true, '#function'],
+            inlet: [false, []],
             input: [true, '#function'],
             output: [true, '#function'],
-            inlet: [false, []],
             layout: [true, {}]
         })
         this.inlet = this.data.inlet || null

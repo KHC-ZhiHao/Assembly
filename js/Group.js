@@ -7,8 +7,20 @@ class Group extends ModuleBase {
         this.mode = 'factory'
         this.toolbox = {}
         this.data = this.$verify(options, {
+            alias: [false, 'no_alias_group'],
+            merger: [false, {}],
             create: [false, function(){}]
         })
+        this.initMerger()
+    }
+
+    initMerger() {
+        for (let key in this.data.merger) {
+            let alone = this.data.merger[key]
+            if (!alone.tool || !alone.line) {
+                this.$systemError('initMerger', 'Group not alone group.', alone)
+            }
+        }
     }
 
     alone(options) {
@@ -29,8 +41,6 @@ class Group extends ModuleBase {
         this.create = null
     }
 
-    // get
-
     getTool(name) {
         if( this.toolbox[name] ){
             return this.toolbox[name]
@@ -47,15 +57,21 @@ class Group extends ModuleBase {
         }
     }
 
+    getMerger(name) {
+        if (this.data.merger[name]) {
+            return this.data.merger[name]
+        } else {
+            this.$systemError('getMerger', 'Merger not found.', name)
+        }
+    }
+
     callTool(name) {
         return this.getTool(name).use()
     }
 
-    callLine(name) {
+    callLine(name, group = this) {
         return this.getLine(name).use()
     }
-
-    // compile
 
     /**
      * @function addLine(options)
@@ -81,8 +97,6 @@ class Group extends ModuleBase {
             this.toolbox[tool.name] = tool
         }
     }
-
-    // has
 
     hasLine(name) {
         return !!this.line[name]

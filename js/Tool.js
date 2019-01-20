@@ -3,49 +3,70 @@
  * @desc Assembly的最小單位，負責執行指定邏輯
  */
 
+/**
+ * @argument options
+ * @member {string}   name 模具名稱
+ * @member {number}   paramLength 參數長度
+ * @member {boolean}  allowDirect 是否允許直接回傳
+ * @member {function} create 首次使用該模具時呼叫
+ * @member {function} action 主要執行的function
+ */
+
 class Tool extends ModuleBase {
+
+    /**
+     * @member {Case} user this指向的位置，Case是一個空物件
+     * @member {object} store 對外暴露的物件
+     */
 
     constructor(options = {}, group, user) {
         super('Tool')
-        this.id = 0
         this.user = user || new Case()
-        this.used = []
         this.store = {}
         this.group = group
+        this.argumentLength = typeof options.paramLength === 'number' ? options.paramLength : -1
         this.data = this.$verify(options, {
             name: [true, ''],
-            create: [false, function () { }],
+            create: [false, function () {}],
             action: [true, '#function'],
-            allowDirect: [false, true],
-            paramLength: [false, 0]
+            allowDirect: [false, true]
         })
     }
 
     get name() { return this.data.name }
-    get groupCase() { return this.group.case }
+
+    /**
+     * @function install()
+     * @desc 當模具被第一次使用時呼叫
+     */
 
     install() {
         this.initSystem()
         this.initArgLength()
         this.install = null
         this.data.create.bind(this.user)(this.store, {
-            group: this.groupCase,
+            group: this.group.case,
             include: this.include.bind(this)
         })
     }
 
+    /**
+     * @function initSystem()
+     * @desc 初始化接口
+     */
+
     initSystem() {
         this.system = {
+            coop: this.coop.bind(this),
             store: this.store,
-            group: this.groupCase,
+            group: this.group.case,
             include: this.include.bind(this)
         }
     }
 
     initArgLength() {
-        this.argumentLength = this.data.paramLength !== 0 ? this.data.paramLength : (this.data.action.length - 3)
-        if (this.argumentLength < 0) {
-            this.argumentLength = ModuleBase.getArgsLength(this.data.action) - 3
+        if (this.argumentLength === -1) {
+            this.argumentLength = Functions.getArgsLength(this.data.action) - 3
         }
         if (this.argumentLength < 0) {
             this.$systemError('initArgLength', 'Args length < 0', this.name + `(length:${this.argumentLength})`)
@@ -69,18 +90,18 @@ class Tool extends ModuleBase {
 
     createSupport(exps, supData) {
         return {
-            ng: function (broadcast) {
+            ng: function(broadcast) {
                 if (typeof broadcast === 'function') {
                     supData.noGood = broadcast
                     return exps
                 }
-                this.$systemError('createSupport', 'Ng param not a function.', broadcast)
+                this.$systemError('createSupport', 'NG param not a function.', broadcast)
             },
-            packing: function () {
+            packing: function() {
                 supData.package = supData.package.concat([...arguments])
                 return exps
             },
-            unPacking: function () {
+            unPacking: function() {
                 supData.package = []
                 return exps
             }
@@ -93,26 +114,34 @@ class Tool extends ModuleBase {
 
     createLambda(func, type, supports) {
         let self = this
-        return function () {
-            let params = supports.package.concat([...arguments])
-            let callback = null
-            if (type === 'action') {
-                if (typeof params.slice(-1)[0] === 'function') {
-                    callback = params.pop()
-                } else {
-                    self.$systemError('createLambda', 'Action must a callback, no need ? try direct!')
+        let name = Symbol(this.group.data.alias + '_' + this.name + '_' + type)
+        let tool = {
+            [name]: function() {
+                let params = supports.package.concat([...arguments])
+                let callback = null
+                if (type === 'action') {
+                    if (typeof params.slice(-1)[0] === 'function') {
+                        callback = params.pop()
+                    } else {
+                        self.$systemError('createLambda', 'Action must a callback, no need ? try direct!')
+                    }
                 }
+                let args = new Array(self.argumentLength)
+                for (let i = 0; i < args.length; i++) {
+                    args[i] = params[i] || undefined
+                }
+                return func.bind(self)(args, callback, supports)
             }
-            let args = new Array(self.argumentLength)
-            for (let i = 0; i < args.length; i++) {
-                args[i] = params[i]
-            }
-            return func.bind(self)(args, callback, supports)
         }
+        return tool[name]
     }
 
     include(name) {
         return this.group.getTool(name).use()
+    }
+
+    coop(name) {
+        return this.group.getMerger(name)
     }
 
     call(params, error, success) {

@@ -15,18 +15,7 @@
         }
     
     })( this || (typeof window !== 'undefined' ? window : global), function(){
-        /**
- * @class ModuleBase()
- * @desc 系統殼層
- */
-
-class ModuleBase {
-
-    constructor(name){
-        this.$moduleBase = { 
-            name: name || 'no name'
-        };
-    }
+        class Functions {
 
     static getArgsLength(func) {
         var funcStr = func.toString()
@@ -56,6 +45,20 @@ class ModuleBase {
             return 0;
         }
         return commaCount + 1
+    }
+
+}
+/**
+ * @class ModuleBase()
+ * @desc 系統殼層
+ */
+
+class ModuleBase {
+
+    constructor(name){
+        this.$moduleBase = { 
+            name: name || 'no name'
+        };
     }
 
     /**
@@ -107,15 +110,20 @@ class Case {}
 
 /**
  * @class Assembly()
- * @desc no
+ * @desc 主核心
  */
 
 class Assembly extends ModuleBase {
 
+    /**
+     * @member {object} groups group的集結包
+     * @member {function} bridge 每次請求時的一個呼叫函數
+     */
+
     constructor() {
         super("Assembly")
         this.groups = {}
-        this.namespace = null
+        this.bridge = null
     }
 
     /**
@@ -124,7 +132,11 @@ class Assembly extends ModuleBase {
      */
 
     getGroup(name) {
-        return this.groups[name]
+        if (this.hasGroup(name)) {
+            return this.groups[name]
+        } else {
+            this.$systemError('getGroup', 'Group not found.')
+        }
     }
 
     /**
@@ -203,6 +215,7 @@ class Assembly extends ModuleBase {
      */
 
     tool(groupName, name) {
+        this.callBridge(groupName, name)
         return this.getTool(groupName, name).use()
     }
 
@@ -212,7 +225,33 @@ class Assembly extends ModuleBase {
      */
 
     line(groupName, name) {
+        this.callBridge(groupName, name)
         return this.getLine(groupName, name).use()
+    }
+
+    /**
+     * @function callBridge
+     * @desc 呼叫橋接器
+     */
+
+    callBridge(groupName, name) {
+        if (this.bridge) {
+            this.bridge(this, groupName, name)
+        }
+    }
+
+    /**
+     * @function setBridge
+     * @desc 建立橋接器，在任何呼叫前執行一個function
+     * @param {function} bridge 
+     */
+
+    setBridge(bridge) {
+        if (typeof bridge === 'function') {
+            this.bridge = bridge
+        } else {
+            this.$systemError('setBridge', 'Bridge not a function.', bridge)
+        }
     }
 
 }
@@ -222,49 +261,70 @@ class Assembly extends ModuleBase {
  * @desc Assembly的最小單位，負責執行指定邏輯
  */
 
+/**
+ * @argument options
+ * @member {string}   name 模具名稱
+ * @member {number}   paramLength 參數長度
+ * @member {boolean}  allowDirect 是否允許直接回傳
+ * @member {function} create 首次使用該模具時呼叫
+ * @member {function} action 主要執行的function
+ */
+
 class Tool extends ModuleBase {
+
+    /**
+     * @member {Case} user this指向的位置，Case是一個空物件
+     * @member {object} store 對外暴露的物件
+     */
 
     constructor(options = {}, group, user) {
         super('Tool')
-        this.id = 0
         this.user = user || new Case()
-        this.used = []
         this.store = {}
         this.group = group
+        this.argumentLength = typeof options.paramLength === 'number' ? options.paramLength : -1
         this.data = this.$verify(options, {
             name: [true, ''],
-            create: [false, function () { }],
+            create: [false, function () {}],
             action: [true, '#function'],
-            allowDirect: [false, true],
-            paramLength: [false, 0]
+            allowDirect: [false, true]
         })
     }
 
     get name() { return this.data.name }
-    get groupCase() { return this.group.case }
+
+    /**
+     * @function install()
+     * @desc 當模具被第一次使用時呼叫
+     */
 
     install() {
         this.initSystem()
         this.initArgLength()
         this.install = null
         this.data.create.bind(this.user)(this.store, {
-            group: this.groupCase,
+            group: this.group.case,
             include: this.include.bind(this)
         })
     }
 
+    /**
+     * @function initSystem()
+     * @desc 初始化接口
+     */
+
     initSystem() {
         this.system = {
+            coop: this.coop.bind(this),
             store: this.store,
-            group: this.groupCase,
+            group: this.group.case,
             include: this.include.bind(this)
         }
     }
 
     initArgLength() {
-        this.argumentLength = this.data.paramLength !== 0 ? this.data.paramLength : (this.data.action.length - 3)
-        if (this.argumentLength < 0) {
-            this.argumentLength = ModuleBase.getArgsLength(this.data.action) - 3
+        if (this.argumentLength === -1) {
+            this.argumentLength = Functions.getArgsLength(this.data.action) - 3
         }
         if (this.argumentLength < 0) {
             this.$systemError('initArgLength', 'Args length < 0', this.name + `(length:${this.argumentLength})`)
@@ -288,18 +348,18 @@ class Tool extends ModuleBase {
 
     createSupport(exps, supData) {
         return {
-            ng: function (broadcast) {
+            ng: function(broadcast) {
                 if (typeof broadcast === 'function') {
                     supData.noGood = broadcast
                     return exps
                 }
-                this.$systemError('createSupport', 'Ng param not a function.', broadcast)
+                this.$systemError('createSupport', 'NG param not a function.', broadcast)
             },
-            packing: function () {
+            packing: function() {
                 supData.package = supData.package.concat([...arguments])
                 return exps
             },
-            unPacking: function () {
+            unPacking: function() {
                 supData.package = []
                 return exps
             }
@@ -312,26 +372,34 @@ class Tool extends ModuleBase {
 
     createLambda(func, type, supports) {
         let self = this
-        return function () {
-            let params = supports.package.concat([...arguments])
-            let callback = null
-            if (type === 'action') {
-                if (typeof params.slice(-1)[0] === 'function') {
-                    callback = params.pop()
-                } else {
-                    self.$systemError('createLambda', 'Action must a callback, no need ? try direct!')
+        let name = Symbol(this.group.data.alias + '_' + this.name + '_' + type)
+        let tool = {
+            [name]: function() {
+                let params = supports.package.concat([...arguments])
+                let callback = null
+                if (type === 'action') {
+                    if (typeof params.slice(-1)[0] === 'function') {
+                        callback = params.pop()
+                    } else {
+                        self.$systemError('createLambda', 'Action must a callback, no need ? try direct!')
+                    }
                 }
+                let args = new Array(self.argumentLength)
+                for (let i = 0; i < args.length; i++) {
+                    args[i] = params[i] || undefined
+                }
+                return func.bind(self)(args, callback, supports)
             }
-            let args = new Array(self.argumentLength)
-            for (let i = 0; i < args.length; i++) {
-                args[i] = params[i]
-            }
-            return func.bind(self)(args, callback, supports)
         }
+        return tool[name]
     }
 
     include(name) {
         return this.group.getTool(name).use()
+    }
+
+    coop(name) {
+        return this.group.getMerger(name)
     }
 
     call(params, error, success) {
@@ -437,9 +505,9 @@ class Line extends ModuleBase {
         this.data = this.$verify(options, {
             name: [true, ''],
             fail: [true, '#function'],
+            inlet: [false, []],
             input: [true, '#function'],
             output: [true, '#function'],
-            inlet: [false, []],
             layout: [true, {}]
         })
         this.inlet = this.data.inlet || null
@@ -644,8 +712,20 @@ class Group extends ModuleBase {
         this.mode = 'factory'
         this.toolbox = {}
         this.data = this.$verify(options, {
+            alias: [false, 'no_alias_group'],
+            merger: [false, {}],
             create: [false, function(){}]
         })
+        this.initMerger()
+    }
+
+    initMerger() {
+        for (let key in this.data.merger) {
+            let alone = this.data.merger[key]
+            if (!alone.tool || !alone.line) {
+                this.$systemError('initMerger', 'Group not alone group.', alone)
+            }
+        }
     }
 
     alone(options) {
@@ -666,8 +746,6 @@ class Group extends ModuleBase {
         this.create = null
     }
 
-    // get
-
     getTool(name) {
         if( this.toolbox[name] ){
             return this.toolbox[name]
@@ -684,15 +762,21 @@ class Group extends ModuleBase {
         }
     }
 
+    getMerger(name) {
+        if (this.data.merger[name]) {
+            return this.data.merger[name]
+        } else {
+            this.$systemError('getMerger', 'Merger not found.', name)
+        }
+    }
+
     callTool(name) {
         return this.getTool(name).use()
     }
 
-    callLine(name) {
+    callLine(name, group = this) {
         return this.getLine(name).use()
     }
-
-    // compile
 
     /**
      * @function addLine(options)
@@ -718,8 +802,6 @@ class Group extends ModuleBase {
             this.toolbox[tool.name] = tool
         }
     }
-
-    // has
 
     hasLine(name) {
         return !!this.line[name]

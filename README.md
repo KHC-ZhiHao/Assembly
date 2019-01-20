@@ -15,21 +15,40 @@ npm
 npm i assemblyjs
 ```
 
-js
+web
+```html
+<script src="./dist/index.js"></script>
+```
 ```js
-// web
-var factory = new Assembly()
-
-// webpack
+let factory = new Assembly()
+```
+webpack
+```js
 import Assembly from 'assemblyjs'
-var factory = new Assembly()
-
-// nodejs
-var Assembly = require('assemblyjs')
-var factory = new Assembly()
+let factory = new Assembly()
+```
+nodejs
+```js
+let Assembly = require('assemblyjs')
+let factory = new Assembly()
 ```
 
 ## 如何開始
+
+### 建立工廠
+
+Assembly是集結Group的工廠
+
+> Bridge是每次從工廠呼叫function時都會執行的函式，初始目的是為了動態載入group
+
+```js
+let factory = new Assembly()
+factory.setBridge((factory, groupName, toolName) => {
+	if (factory.hasGroup(groupName) === false) {
+        factory.addGroup(groupName, require(`./${groupName}`))
+    }
+})
+```
 
 ### Group
 
@@ -41,8 +60,11 @@ let group = new Assembly.Group()
 
 當group被Assembly引入時可以藉由create客製化屬性，可用於模組化管理
 
+> alias只賦予系統訊息的命名，而非factory呼叫的key
+
 ```js
 let group = new Assembly.Group({
+    alias: 'math',
     create(options) {
         this.options = options // {coefficient: 5}
     }
@@ -77,11 +99,43 @@ let alone = group.alone({
 alone.tool('sum').direct(5, 10) // 15
 ```
 
+#### Merger And Coop (ver1.0.8)
+
+Merger是group使用alone group的接口
+
+```js
+let valid = new Assembly.Group()
+valid.alone() // only use alone
+valid.addTool({
+    name: 'validNumber',
+    action: function(number, { include, group, store }, error, success) {
+        if (typeof number === "number") {
+            success()
+        } else {
+            error()
+        }
+    }
+})
+
+let math = new Assembly.Group({
+    merger: { valid }
+})
+
+math.addTool({
+    name: 'double',
+    action: function(number, { include, group, store, coop }, error, success) {
+        coop('valid').tool('validNumber').ng(error).action(number, () => {
+            success(number * 2)
+        })
+    }
+})
+```
+
 ### Tool
 
 Tool是一個裝載function的單位，由group建造
 
->(v1.0.6) Assembly帶有一個參數解析器，但在js不斷突變的狀況下，我無法保證該解析器能夠處理所有狀況，盡可能使用paramLength來處理，且定義paramLength將跳過執行解析器的動作，可以提供良好的效能
+>Assembly帶有一個參數解析器，但在js不斷突變的狀況下，我無法保證該解析器能夠處理所有狀況，盡可能使用paramLength來處理，且定義paramLength將跳過執行解析器的動作，可以提供良好的效能
 
 ```js
 group.addTool({
