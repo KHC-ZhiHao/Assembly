@@ -17,4 +17,4 @@ group.addTool({
     }
 })
 
-module.exports = group.alone()
+module.exports = group

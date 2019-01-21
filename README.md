@@ -8,6 +8,8 @@ javascript是一個基於非同步驅動，且有數種呼叫function的概念�
 
 而Assembly是一個函數包裝器，求助些許物件導向的概念，編寫出來的function可以泛用各種型態，並適應鍊式寫法。
 
+## 函數式程式設計
+
 ## 安裝
 
 npm
@@ -76,9 +78,7 @@ factory.addGroup('math', group, {
 
 #### Alone
 
-獨立Group，使其不再受Factory管制
-
->獨立的Group無法被加入Factory，也無法反覆獨立
+獨立Group，使其不再受Factory管制。
 
 ```js
 let group = new Assembly.Group({
@@ -352,6 +352,9 @@ factory.line('math', 'compute')(5).add(10).double().promise().then((result) => {
     console.log(result) // 30
 })
 ```
+
+## 其他
+[版本LOG](https://github.com/KHC-ZhiHao/Assembly/blob/master/document/version.md)
 
 [npm-image]: https://img.shields.io/npm/v/assemblyjs.svg
 [npm-url]: https://npmjs.org/package/assemblyjs

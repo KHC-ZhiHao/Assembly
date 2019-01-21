@@ -1,45 +1,86 @@
+/**
+ * @class Group
+ * @desc 封裝tool的群組，用於歸類與參數設定
+ * @argument options 實例化時可以接收以下參數
+ * @param {string} alias Group別名
+ * @param {object} merger 引用的外部Group
+ * @param {function} create 首次使用該Group時呼叫
+ */
+
 class Group extends ModuleBase {
 
     constructor(options = {}) {
         super("Group")
         this.case = new Case()
         this.line = {}
-        this.mode = 'factory'
         this.toolbox = {}
         this.data = this.$verify(options, {
             alias: [false, 'no_alias_group'],
             merger: [false, {}],
             create: [false, function(){}]
         })
+        this.initStatus()
         this.initMerger()
     }
 
+    /**
+     * @function initStatus()
+     * @private
+     * @desc 初始化狀態
+     */
+
+    initStatus() {
+        this.status = {
+            created: false
+        }
+    }
+
+    /**
+     * @function initMerger()
+     * @private
+     * @desc 檢查Merger是否正確
+     */
+
     initMerger() {
         for (let key in this.data.merger) {
-            let alone = this.data.merger[key]
-            if (!alone.tool || !alone.line) {
-                this.$systemError('initMerger', 'Group not alone group.', alone)
+            let group = this.data.merger[key]
+            if ((group instanceof Group) === false) {
+                this.$systemError('initMerger', 'Not a group.', group)
             }
         }
     }
+
+    /**
+     * @function alone()
+     * @desc 回傳一個獨立的呼叫接口
+     */
 
     alone(options) {
-        if (this.mode === 'alone') {
-            this.$systemError('alone', 'Alone only use once, try function() { return new Group() }.')
-        } else {
-            this.mode = 'alone'
-            this.create(options)
-            return {
-                tool: this.callTool.bind(this),
-                line: this.callLine.bind(this)
-            }
+        this.create(options)
+        return {
+            tool: this.callTool.bind(this),
+            line: this.callLine.bind(this)
         }
     }
 
+    /**
+     * @function create
+     * @private
+     * @desc 當Group首次宣告alone或引入factory時呼叫
+     */
+
     create(options) {
-        this.data.create.bind(this.case)(options)
-        this.create = null
+        if (this.status.created === false) {
+            this.data.create.bind(this.case)(options)
+            this.status.created = true
+        }
     }
+
+    /**
+     * @function getTool
+     * @private
+     * @param {string} name 獲取Group內的Tool
+     */
 
     getTool(name) {
         if( this.toolbox[name] ){
@@ -49,6 +90,12 @@ class Group extends ModuleBase {
         }
     }
 
+    /**
+     * @function getLine
+     * @private
+     * @param {string} name 獲取Group內的Line
+     */
+
     getLine(name) {
         if( this.line[name] ){
             return this.line[name]
@@ -57,25 +104,44 @@ class Group extends ModuleBase {
         }
     }
 
+    /**
+     * @function getMerger
+     * @private
+     * @param {string} name 獲取Group Merger對象宣告的alone
+     */
+
     getMerger(name) {
         if (this.data.merger[name]) {
-            return this.data.merger[name]
+            return this.data.merger[name].alone()
         } else {
             this.$systemError('getMerger', 'Merger not found.', name)
         }
     }
 
+    /**
+     * @function callTool
+     * @private
+     * @param {string} name 使用Group的Tool
+     */
+
     callTool(name) {
         return this.getTool(name).use()
     }
 
-    callLine(name, group = this) {
+    /**
+     * @function callLine
+     * @private
+     * @param {string} name 使用Group的Tool
+     */
+
+    callLine(name) {
         return this.getLine(name).use()
     }
 
     /**
-     * @function addLine(options)
+     * @function addLine
      * @desc 加入一個產線
+     * @param {object} options 建立line所需要的物件
      */
 
     addLine(options){
@@ -86,7 +152,7 @@ class Group extends ModuleBase {
     }
 
     /**
-     * @function addTool(options)
+     * @function addTool
      * @desc 加入一個工具
      * @param {object} options 建立tool所需要的物件
      */
@@ -98,12 +164,24 @@ class Group extends ModuleBase {
         }
     }
 
-    hasLine(name) {
-        return !!this.line[name]
-    }
+    /**
+     * @function hasTool
+     * @desc getTool失敗會擲出錯誤，使用這支function來檢查此問題
+     * @param {string} name 搜尋目標line的name
+     */
 
     hasTool(name) {
         return !!this.toolbox[name]
+    }
+
+    /**
+     * @function hasLine
+     * @desc getLine失敗會擲出錯誤，使用這支function來檢查此問題
+     * @param {string} name 搜尋目標line的name
+     */
+
+    hasLine(name) {
+        return !!this.line[name]
     }
 
 }

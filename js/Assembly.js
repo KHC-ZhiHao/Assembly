@@ -1,5 +1,5 @@
 /**
- * @class Assembly()
+ * @class Assembly
  * @desc 主核心
  */
 
@@ -62,13 +62,7 @@ class Assembly extends ModuleBase {
             this.$systemError('addGroup', 'Must group.', group)
             return
         }
-        if (group.mode === 'alone') {
-            this.$systemError('addGroup', 'Group is alone.', group)
-            return
-        }
-        if (group.create) {
-            group.create(options)
-        }
+        group.create(options)
         this.groups[name] = group
     }
 
@@ -121,6 +115,7 @@ class Assembly extends ModuleBase {
 
     /**
      * @function callBridge
+     * @private
      * @desc 呼叫橋接器
      */
 
@@ -133,7 +128,7 @@ class Assembly extends ModuleBase {
     /**
      * @function setBridge
      * @desc 建立橋接器，在任何呼叫前執行一個function
-     * @param {function} bridge 
+     * @param {function} bridge 呼叫函式
      */
 
     setBridge(bridge) {

@@ -9,6 +9,6 @@ factory.setBridge((factory, groupName, toolName) => {
 
 factory.tool('math', 'double').ng((err) => {
     console.log(err)
-}).action(5, (result) => {
+}).action(80, (result) => {
     console.log(result)
 })

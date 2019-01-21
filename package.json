@@ -1,6 +1,6 @@
 {
   "name": "assemblyjs",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Assembly is a function wrapper based on the concept of functional programming",
   "main": "dist/index.js",
   "scripts": {

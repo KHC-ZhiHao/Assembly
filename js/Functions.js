@@ -1,4 +1,16 @@
+/**
+ * @class Functions
+ * @desc Functions擔任Helper的腳色，專門放置靜態function
+ */
+
 class Functions {
+
+    /**
+     * @function getArgsLength(function)
+     * @static
+     * @desc 獲取函數的參數長度
+     * @see https://stackoverflow.com/questions/42899083/get-function-parameter-length-including-default-params
+     */
 
     static getArgsLength(func) {
         var funcStr = func.toString()

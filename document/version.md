@@ -39,3 +39,19 @@
 
 * Error: 某些錯誤有了專屬的錯誤訊息
 * Error : exception的追蹤能看到函數名稱
+
+## 1.0.9
+
+### INFO
+
+Alone的出現嚴重破壞了Assembly的單純性，Group的關聯變的耦合，因此我重新審視了Alone的誕生，在某個專案中，我需要建構Repository來確保資料一致，我用了Assembly來建立Repository所需要的程式碼，再創造alone這個模式引入商業邏輯的Group中，這是糟糕的決定，再撰寫Test時我無法覆蓋Repository的程式碼，Test是Assembly的目標之一，如果能在aws lambda上進行TDD是多麼讓人開心的事，alone是必須存在的，Factory的存在只是賦予流程控制的接口，在1.0.8版本我試著賦予alone一個未來可以追蹤的接口(coop)，但仍無法彌補這個錯誤，本版本解開了Alone的限制，Group既可以Alone也可以寄付在Factory中(可以復用但create只會觸發一次，必須注意options進入的入口是否正確)
+
+### NEW
+
+* 開發者文件上線拉
+
+### MODIFY
+
+* 移除了Line上無意義的變數
+* Merger: 1.0.8犯了個錯誤，Merger應該接收Group而不是Alone
+* Alone: 新的策略，Alone將去除擴展限制

@@ -27,7 +27,7 @@ group.addTool({
     create: function(store, { include, group }) {
         this.coefficient = 2
     },
-    action: function(number, { coop }, error, success) {
+    action: function(number = 3, { coop }, error, success) {
         coop('valid').tool('isNumbers').ng(error).action([number], (err) => {
             success(number * this.coefficient)
         })
