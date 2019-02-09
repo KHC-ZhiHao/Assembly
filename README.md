@@ -4,7 +4,7 @@
 
 ## 警告
 
-由於WebAssembly即將到來，為了防止誤會，我將停止更新Assembly，並將後續開發與維護轉移至Packhouse套件。
+由於WebAssembly即將到來，為了防止誤會，我將停止更新Assembly，並將後續開發與維護轉移至[Packhouse](https://github.com/KHC-ZhiHao/Packhouse)套件。
 
 ## 簡介
 
