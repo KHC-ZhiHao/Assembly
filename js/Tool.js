@@ -3,6 +3,7 @@
  * @desc Assembly的最小單位，負責執行指定邏輯
  * @argument options 實例化時可以接收以下參數
  * @param {string} name 模具名稱
+ * @param {array} molds 模型組
  * @param {number} paramLength 參數長度
  * @param {boolean} allowDirect 是否允許直接回傳
  * @param {function} create 首次使用該模具時呼叫
@@ -24,6 +25,7 @@ class Tool extends ModuleBase {
         this.argumentLength = typeof options.paramLength === 'number' ? options.paramLength : -1
         this.data = this.$verify(options, {
             name: [true, ''],
+            molds: [false, []],
             create: [false, function () {}],
             action: [true, '#function'],
             allowDirect: [false, true]
@@ -165,6 +167,20 @@ class Tool extends ModuleBase {
         return tool[name]
     }
 
+    parseMold(params, index, error) {
+        let name = this.data.molds[index]
+        if (name) {
+            let mold = this.group.getMold(name)
+            let check = mold.check(params)
+            if (check === true) {
+                return mold.casting(params)
+            } else {
+                error(check)
+            }
+        }
+        return params
+    }
+
     /**
      * @function include
      * @private
@@ -192,6 +208,9 @@ class Tool extends ModuleBase {
      */
 
     call(params, error, success) {
+        for (let i = 0; i < params.length; i++) {
+            params[i] = this.parseMold(params[i], i, error)
+        }
         this.data.action.call(this.user, ...params, this.system, error, success)
     }
 

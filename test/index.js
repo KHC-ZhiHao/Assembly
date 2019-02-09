@@ -1,4 +1,4 @@
-let Assembly = require('../dist/Assembly')
+let Assembly = require('../dist/index')
 let factory = new Assembly()
 
 factory.setBridge((factory, groupName, toolName) => {
@@ -7,8 +7,14 @@ factory.setBridge((factory, groupName, toolName) => {
     }
 })
 
+factory.tool('math', 'sum').ng((err) => {
+    console.log(err)
+}).action(90, 80, (result) => {
+    console.log(result)
+})
+
 factory.tool('math', 'double').ng((err) => {
     console.log(err)
-}).action(80, (result) => {
+}).action(90, (result) => {
     console.log(result)
 })

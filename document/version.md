@@ -55,3 +55,17 @@ Alone的出現嚴重破壞了Assembly的單純性，Group的關聯變的耦合�
 * 移除了Line上無意義的變數
 * Merger: 1.0.8犯了個錯誤，Merger應該接收Group而不是Alone
 * Alone: 新的策略，Alone將去除擴展限制
+
+## 1.1.0
+
+### NEW
+
+* Mold : 參數配裝模式，目的在於清楚的知道物件參數間的定義
+
+### FIX
+
+* Group => addLine : 錯誤訊息修正
+
+### MODIFY
+
+* 移除babel與minify改用uglifyJS，這樣才能支援Symbol，但代表版本不再向下支援至es5

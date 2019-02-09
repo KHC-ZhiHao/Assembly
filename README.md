@@ -2,13 +2,15 @@
 
 [![NPM Version][npm-image]][npm-url]
 
+## 警告
+
+由於WebAssembly即將到來，為了防止誤會，我將停止更新Assembly，並將後續開發與維護轉移至Packhouse套件。
+
 ## 簡介
 
 javascript是一個基於非同步驅動，且有數種呼叫function的概念，這點讓js於functional programming設計下險些困難。
 
 而Assembly是一個函數包裝器，求助些許物件導向的概念，編寫出來的function可以泛用各種型態，並適應鍊式寫法。
-
-## 函數式程式設計
 
 ## 安裝
 
@@ -46,7 +48,7 @@ Assembly是集結Group的工廠
 ```js
 let factory = new Assembly()
 factory.setBridge((factory, groupName, toolName) => {
-	if (factory.hasGroup(groupName) === false) {
+    if (factory.hasGroup(groupName) === false) {
         factory.addGroup(groupName, require(`./${groupName}`))
     }
 })
@@ -101,11 +103,12 @@ alone.tool('sum').direct(5, 10) // 15
 
 #### Merger And Coop (ver1.0.8)
 
-Merger是group使用alone group的接口
+Merger是Group互相引用的接口
+
+> Merger的Group也會觸發create，請避免把負責被引用的Group加入Factory，除非他不需要接收外部參數
 
 ```js
 let valid = new Assembly.Group()
-valid.alone() // only use alone
 valid.addTool({
     name: 'validNumber',
     action: function(number, { include, group, store }, error, success) {
@@ -239,6 +242,39 @@ factory.tool('math', 'errorDemo').ng((err)=>{
 }).promise()
 ```
 
+### Mold (v1.1.0)
+
+Mold是一個參數配裝器，只支援同步處理，用於參數驗證與型態轉換。
+
+```js
+group.addMold({
+    // (Require) mold name
+    name: 'int',
+    // 回傳非true及驗證錯誤與回傳訊息
+    check(param) {
+        return typeof param === 'number' ? true : 'Not a number.'
+    },
+    // 參數處理
+    casting(param) {
+        return Number.floor(param)
+    }
+})
+```
+
+```js
+group.addTool({
+    name: 'multiply',
+    mold: [null, 'int'], //設定b參數一定要整數
+    action: function(a, b, system, error, success) {
+        success(a * b)
+    }
+})
+
+factory.tool('math', 'multiply').direct(5.5, 10) // 55
+factory.tool('math', 'multiply').direct(10, 5.5) // 50
+factory.tool('math', 'multiply').direct(10, '5.5') // error 'Not a number.'
+```
+
 ## 生產線
 
 建構生產線是一個函數柯理化(curry)的過程，在這之前，先將整個function給定義好
@@ -312,7 +348,7 @@ group.addLine({
     fail: function(err, report) {
     	report(err)
     },
-    // layout為一個鍊中能呼叫的函數表
+    // layout為一個鍊中能呼叫的函數表，實質為Tool個體
     layout: {
         add: function(number, { include }, error, next) {
             include('sum').action(this.number, number, (err, result) => {
@@ -355,6 +391,7 @@ factory.line('math', 'compute')(5).add(10).double().promise().then((result) => {
 
 ## 其他
 [版本LOG](https://github.com/KHC-ZhiHao/Assembly/blob/master/document/version.md)
+[開發者文件](https://khc-zhihao.github.io/Assembly/document/document.html)
 
 [npm-image]: https://img.shields.io/npm/v/assemblyjs.svg
 [npm-url]: https://npmjs.org/package/assemblyjs

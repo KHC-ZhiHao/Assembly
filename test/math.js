@@ -1,36 +1,37 @@
-let Assembly = require('../dist/Assembly')
-
-// merger 對象必須是個alone單位
+let Assembly = require('../dist/index')
 
 let group = new Assembly.Group({
-    merger: {
-        valid: require('./valid')
-    },
     create() {}
+})
+
+group.addMold({
+    name: 'number',
+    check(param) {
+        return typeof param === 'number' ? true : 'Not a number.'
+    }
 })
 
 group.addTool({
     name: 'sum',
-    allowDirect: true,
+    molds: [null, 'number'],
     paramLength: 2,
+    allowDirect: true,
     create: function(store, { include, group }) {},
-    action: function(a, b, { coop }, error, success) {
-        coop('valid').tool('isNumbers').ng(error).action([a, b], (err) => {
-            success(a + b)
-        })
+    action: function(a, b, system, error, success) {
+        success(a + b)
     }
 })
 
 group.addTool({
     name: 'double',
+    molds: ['number'],
+    paramLength: 1,
     allowDirect: true,
     create: function(store, { include, group }) {
         this.coefficient = 2
     },
-    action: function(number = 3, { coop }, error, success) {
-        coop('valid').tool('isNumbers').ng(error).action([number], (err) => {
-            success(number * this.coefficient)
-        })
+    action: function(number, system, error, success) {
+        success(number * this.coefficient)
     }
 })
 
@@ -49,16 +50,12 @@ group.addLine({
     },
     layout: {
         add: function(number, { include }, error, next) {
-            include('sum').ng(error).action(this.number, number, (result) => {
-                this.number = result
-                next()
-            })
+            this.number = include('sum').ng(error).direct(this.number, number)
+            next()
         },
         double: function({ include }, error, next) {
-            include('double').ng(error).action(this.number, (result) => {
-                this.number = result
-                next()
-            })
+            this.number = include('double').ng(error).action(this.number)
+            next()
         }
     }
 })

@@ -40,7 +40,7 @@ class Assembly extends ModuleBase {
 
     /**
      * @function getLine(groupName,name)
-     * @desc 獲取一個Curried Function
+     * @desc 獲取一個Line
      */
 
     getLine(groupName, name) {
@@ -77,7 +77,7 @@ class Assembly extends ModuleBase {
 
     /**
      * @function hasTool(groupName,name)
-     * @desc 有無註冊過Tool
+     * @desc 有無Tool
      */
 
     hasTool(groupName, name) {
@@ -86,7 +86,7 @@ class Assembly extends ModuleBase {
 
     /**
      * @function hasLine(groupName,name)
-     * @desc 有無柯理化的function
+     * @desc 有無Line
      */
 
     hasLine(groupName, name) {
@@ -95,7 +95,7 @@ class Assembly extends ModuleBase {
 
     /**
      * @function tool(groupName,name)
-     * @desc 呼叫一個tool，當然...它仍是一個具有action, promise等功能的物件
+     * @desc 呼叫一個tool
      */
 
     tool(groupName, name) {

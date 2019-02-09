@@ -13,6 +13,7 @@ class Group extends ModuleBase {
         super("Group")
         this.case = new Case()
         this.line = {}
+        this.moldbox = {}
         this.toolbox = {}
         this.data = this.$verify(options, {
             alias: [false, 'no_alias_group'],
@@ -105,6 +106,20 @@ class Group extends ModuleBase {
     }
 
     /**
+     * @function getMold
+     * @private
+     * @param {string} name 獲取Group內的Mold
+     */
+
+    getMold(name) {
+        if( this.moldbox[name] ){
+            return this.moldbox[name]
+        } else {
+            this.$systemError('getMold', 'Mold not found.', name)
+        }
+    }
+
+    /**
      * @function getMerger
      * @private
      * @param {string} name 獲取Group Merger對象宣告的alone
@@ -139,15 +154,28 @@ class Group extends ModuleBase {
     }
 
     /**
+     * @function addMold
+     * @desc 加入一個模具
+     * @param {object} options 建立mold所需要的物件
+     */
+
+    addMold(options) {
+        let mold = new Mold(options, this)
+        if (this.$noKey('addMold', this.moldbox, mold.name)) {
+            this.moldbox[mold.name] = mold
+        }
+    }
+
+    /**
      * @function addLine
      * @desc 加入一個產線
      * @param {object} options 建立line所需要的物件
      */
 
     addLine(options){
-        let curry = new Line(options, this)
-        if( this.$noKey('currying', this.line, curry.name ) ){
-            this.line[curry.name] = curry
+        let line = new Line(options, this)
+        if (this.$noKey('addLine', this.line, line.name)) {
+            this.line[line.name] = line
         }
     }
 
@@ -182,6 +210,16 @@ class Group extends ModuleBase {
 
     hasLine(name) {
         return !!this.line[name]
+    }
+
+    /**
+     * @function hasMold
+     * @desc getMode失敗會擲出錯誤，使用這支function來檢查此問題
+     * @param {string} name 搜尋目標mold的name
+     */
+
+    hasMold(name) {
+        return !!this.moldbox[name]
     }
 
 }
